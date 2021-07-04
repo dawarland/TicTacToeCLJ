@@ -27,8 +27,9 @@
          [:div.player-block
           [:h2 (str "Player " num " :")]
           [:select {:name (str "p" num "_id") :onchange "
+            /* on recupere les valeurs selectionnees */
             val1 = document.querySelector(\"select[name=\\\"p1_id\\\"]\")?.value;
-            val2 = document.querySelector(\"select[name=\\\"p2_id\\\"]\")?.value || 0;
+            val2 = document.querySelector(\"select[name=\\\"p2_id\\\"]\")?.value || 0; /* 0 correspond a l'ID de l'ordinateur */
           "}
            (for [p all-players]
              [:option {:value (:id p)} (:surname p)])
@@ -65,7 +66,10 @@
      ]
 
     [:a.player-btn__play {:href "#" :onclick "
-    window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
+    if(val1!=val2)
+      window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
+    else
+      alert(\"Merci de choisir des joueurs differents\");
     "} "PLAY" ]
     ))
 
@@ -149,17 +153,20 @@
         [:script {:type "text/javascript"} "
           var player = 1;
           function init() {
+            /* Pour chaque case, on initialise une fonction qui sera déclancher au clique */
             for( x of document.getElementsByClassName(\"game-gameboard__case\") ){
               x.addEventListener(\"click\", function(){
                 console.log(this.id)
                 let [x,y] = this.id.split('')
+                /* Si la case est deja rempli, je ne fais rien */
                 if(this.textContent){
                   return;
                 }
+                /* Sinon, en fonction tu joueur, j'ajoute un X ou un O */
                 this.textContent = (player==1)? \"X\" : \"O\";
                 console.log({player,x,y});
                 player = (player == 1) ? 2 : 1;
-
+                /* TODO : envoyer les info au backend (clojure) */
               })
             }
           };
