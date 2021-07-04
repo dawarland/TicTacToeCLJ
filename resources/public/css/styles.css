@@ -115,5 +115,7 @@ a{
     height: 75px;
     background-color: wheat;
     flex: 1 0 32%;
+    align-items: center;g
+    justify-content: center;
     /*width: auto;*/
 }

@@ -3,6 +3,7 @@
             [tic-tac-toe.gamecontroller :as controller]
             [clojure.string :as str]
             [hiccup.page :as page]
+
             [ring.util.anti-forgery :as util]))
 
 (defn gen-page-head
@@ -25,7 +26,10 @@
    (let [all-players (db/get-all-players)]
          [:div.player-block
           [:h2 (str "Player " num " :")]
-          [:select {:name (str "p" num "_id") :on-change #(println (.. % -target -value))}
+          [:select {:name (str "p" num "_id") :onchange "
+            val1 = document.querySelector(\"select[name=\\\"p1_id\\\"]\")?.value;
+            val2 = document.querySelector(\"select[name=\\\"p2_id\\\"]\")?.value || 0;
+          "}
            (for [p all-players]
              [:option {:value (:id p)} (:surname p)])
            ]
@@ -59,7 +63,10 @@
      (block-player 1)
      (block-player 2)
      ]
-    [:a.player-btn__play {:href (str "/game?p1=" 1 "&p2=" 2)} "PLAY" ]
+
+    [:a.player-btn__play {:href "#" :onclick "
+    window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
+    "} "PLAY" ]
     ))
 
 (defn one-vs-ai
@@ -70,7 +77,9 @@
     [:div.player
      (block-player 1)
      ]
-    [:a.player-btn__play {:href (str "/game?p1=" 1 "&p2=0")} "PLAY" ]
+    [:a.player-btn__play {:href "#" :onclick "
+    window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
+    "} "PLAY" ]
     )
   )
 
@@ -125,17 +134,39 @@
           [:p "nbWin2: " nbWin2]
           ]
          [:div.game-gameboard
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
-          [:div.game-gameboard__case [:p ]]
+          [:div#11.game-gameboard__case [:p ]]
+          [:div#12.game-gameboard__case [:p ]]
+          [:div#13.game-gameboard__case [:p ]]
+          [:div#21.game-gameboard__case [:p ]]
+          [:div#22.game-gameboard__case [:p ]]
+          [:div#23.game-gameboard__case [:p ]]
+          [:div#31.game-gameboard__case [:p ]]
+          [:div#32.game-gameboard__case [:p ]]
+          [:div#33.game-gameboard__case [:p ]]
           ]
          ]
 
+        [:script {:type "text/javascript"} "
+          var player = 1;
+          function init() {
+            for( x of document.getElementsByClassName(\"game-gameboard__case\") ){
+              x.addEventListener(\"click\", function(){
+                console.log(this.id)
+                let [x,y] = this.id.split('')
+                if(this.textContent){
+                  return;
+                }
+                this.textContent = (player==1)? \"X\" : \"O\";
+                console.log({player,x,y});
+                player = (player == 1) ? 2 : 1;
+
+              })
+            }
+          };
+          document.addEventListener(\"DOMContentLoaded\", function(event) {
+              console.log(\"ready\");
+              init();
+          });
+        "]
         ; (controller/play-morpion )
         )))
