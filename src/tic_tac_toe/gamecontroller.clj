@@ -47,8 +47,8 @@
 ;; Marque le coup du joueur player (represente par son numéro
 ;; a la position (i,j)
 
-(defn set-case-morpion [plateau player i j]
-  (assoc plateau (+ i (* 3 j)) player))
+(defn set-case-morpion [plateau player x y]
+  (assoc plateau (+ x (* 3 y)) player))
 
 
 ; test de la fonction :
@@ -58,13 +58,13 @@
 ; -------------------------------------------
 
 ; -------------------------------------------
-; renvoie true si le coup est legal (case (i,j) valide et vide
-(defn legal-move-morpion? [plateau i j]
-  (and (>= i 0)
-       (<= i 2)
-       (>= j 0)
-       (<= j 2)
-       (= (get-case-morpion plateau i j) 0)))
+; renvoie true si le coup est legal (case (x,y) valide et vide
+(defn legal-move-morpion? [plateau x y]
+  (and (>= x 0)
+       (<= x 2)
+       (>= y 0)
+       (<= y 2)
+       (= (get-case-morpion plateau x y) 0)))
 
 
 ; test de la fonction :
@@ -106,6 +106,9 @@
 ; recommence si le coup n'est pas legal
 
 
+(defn move-morpion2 [plateau player x y]
+  (println "Player " player "joue ! x " x " et y " y)
+  (set-case-morpion plateau player x y))
 
 (defn move-morpion [plateau player]
   (defn getpos [] (let [x (read-line) n (read-string x)]
@@ -147,3 +150,10 @@
      (cond (winning-morpion? p) (do (print-morpion plateau) (println "Player " player " wins !"))
            (end-morpion? p)  (do (print-morpion plateau)(println "draw"))
            :else (play-morpion p (exchange player))))))
+
+
+(defn play-morpion2
+  ([x y] (play-morpion2 (make-morpion) 1 x y ))
+  ([plateau player x y]
+   (print-morpion plateau)
+   (move-morpion2 plateau player x y)))

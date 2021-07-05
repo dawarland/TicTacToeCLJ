@@ -23,6 +23,9 @@
            (GET "/game"
                 {params :params}
              (views/game-page params))
+           (POST "/move"
+                {params :params}
+             (views/move params))
            (GET "/location/:loc-id"
                 [loc-id]
              (views/location-page loc-id))

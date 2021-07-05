@@ -22,25 +22,25 @@
    [:a {:href "/all-locations"} "View All Locations"]
    " ]"])
 
-(defn block-player [num]
-   (let [all-players (db/get-all-players)]
-         [:div.player-block
-          [:h2 (str "Player " num " :")]
-          [:select {:name (str "p" num "_id") :onchange "
+(defn bloc-player [num]
+  (let [all-players (db/get-all-players)]
+    [:div.player-bloc
+     [:h2 (str "Player " num " :")]
+     [:select {:name (str "p" num "_id") :onchange "
             /* on recupere les valeurs selectionnees */
             val1 = document.querySelector(\"select[name=\\\"p1_id\\\"]\")?.value;
             val2 = document.querySelector(\"select[name=\\\"p2_id\\\"]\")?.value || 0; /* 0 correspond a l'ID de l'ordinateur */
           "}
-           (for [p all-players]
-             [:option {:value (:id p)} (:surname p)])
-           ]
-          [:form {:action "/add-player" :method "POST"}
-           (util/anti-forgery-field) ; prevents cross-site scripting attacks
-           [:div.player-block__form-group
-            [:input {:type "text" :name "surname" :placeholder "Surname"}]
-            [:input {:type "submit" :value "+"}]]
-           ]
-          ])
+      (for [p all-players]
+        [:option {:value (:id p)} (:surname p)])
+      ]
+     [:form {:action "/add-player" :method "POST"}
+      (util/anti-forgery-field)                             ; prevents cross-site scripting attacks
+      [:div.player-bloc__form-group
+       [:input {:type "text" :name "surname" :placeholder "Surname"}]
+       [:input {:type "submit" :value "+"}]]
+      ]
+     ])
   )
 
 
@@ -49,11 +49,11 @@
   (page/html5
     (gen-page-head "Home")
     [:div.home
-      [:h1 "Tic Tac Toe"]
-      [:p "Choose your mode : "
-       [:a.home-menu__btn {:href (str "/1-vs-AI")} "1 VS AI"]
-       [:a.home-menu__btn {:href (str "/1-vs-1")} "1 VS 1"]
-       ]
+     [:h1 "Tic Tac Toe"]
+     [:p "Choose your mode : "
+      [:a.home-menu__btn {:href (str "/1-vs-AI")} "1 VS AI"]
+      [:a.home-menu__btn {:href (str "/1-vs-1")} "1 VS 1"]
+      ]
      ]))
 (defn one-vs-one
   []
@@ -61,8 +61,8 @@
     (gen-page-head "1 VS 1")
     [:h1 "Choose your players :"]
     [:div.player
-     (block-player 1)
-     (block-player 2)
+     (bloc-player 1)
+     (bloc-player 2)
      ]
 
     [:a.player-btn__play {:href "#" :onclick "
@@ -70,7 +70,7 @@
       window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
     else
       alert(\"Merci de choisir des joueurs differents\");
-    "} "PLAY" ]
+    "} "PLAY"]
     ))
 
 (defn one-vs-ai
@@ -79,11 +79,11 @@
     (gen-page-head "1 VS AI")
     [:h1 "Choose your player :"]
     [:div.player
-     (block-player 1)
+     (bloc-player 1)
      ]
     [:a.player-btn__play {:href "#" :onclick "
     window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
-    "} "PLAY" ]
+    "} "PLAY"]
     )
   )
 
@@ -94,8 +94,8 @@
     (gen-page-head "Add a player")
     [:h1 "Add a Player"]
     [:form {:action "/add-player" :method "POST"}
-     (util/anti-forgery-field) ; prevents cross-site scripting attacks
-     [:div.player-block__form-group
+     (util/anti-forgery-field)                              ; prevents cross-site scripting attacks
+     [:div.player-bloc__form-group
       [:input {:type "text" :name "surname" :placeholder "Surname"}]
       [:input {:type "submit" :value "+"}]]
      ]))
@@ -119,6 +119,29 @@
       [:p "x: " x]
       [:p "y: " y])))
 
+
+(defn game-case
+  [x y]
+  [:form {:action "/move" :method "POST"}
+   (util/anti-forgery-field)
+   [:input {:type "hidden" :name "x" :value x}]
+   [:input {:type "hidden" :name "y" :value y}]
+   [:input {:type "hidden" :name "returnURL"}]
+   [:button {:class "game-gameboard__case" :name "submit"} [:p]]
+   ]
+  )
+(defn parse-int [s]
+  (Integer. (re-find  #"\d+" s )))
+(defn move
+  [{:keys [x y returnURL]}]
+  (page/html5
+    [:p "x: " x]
+    [:p "y: " y]
+    [:p "returnURL: " returnURL]
+    [:p "game: " (str (controller/play-morpion2  (parse-int x)  (parse-int y)) )  ]
+
+    ))
+
 (defn game-page
   [{:keys [p1 p2]}]
   (let [{surname1 :surname nbWin1 :nbWin} (db/get-player p1) {surname2 :surname nbWin2 :nbWin} (db/get-player p2)]
@@ -126,31 +149,31 @@
       (gen-page-head (str "Game " p1))
       ; (let [game-id (db/add-game-to-db p1 p2)]
       (let [game-id 1]
-          [:h1 (str "Game " game-id)])
-        [:div.game
-         [:div.game-block
-          [:p "id1: " p1]
-          [:p "surname1: " surname1]
-          [:p "nbWin1: " nbWin1]
+        [:h1 (str "Game " game-id)])
+      [:div.game
+       [:div.game-bloc
+        [:p "id1: " p1]
+        [:p "surname1: " surname1]
+        [:p "nbWin1: " nbWin1]
 
-          [:p "id2: " p2]
-          [:p "surname2: " surname2]
-          [:p "nbWin2: " nbWin2]
-          ]
-         [:div.game-gameboard
-          [:div#11.game-gameboard__case [:p ]]
-          [:div#12.game-gameboard__case [:p ]]
-          [:div#13.game-gameboard__case [:p ]]
-          [:div#21.game-gameboard__case [:p ]]
-          [:div#22.game-gameboard__case [:p ]]
-          [:div#23.game-gameboard__case [:p ]]
-          [:div#31.game-gameboard__case [:p ]]
-          [:div#32.game-gameboard__case [:p ]]
-          [:div#33.game-gameboard__case [:p ]]
-          ]
-         ]
+        [:p "id2: " p2]
+        [:p "surname2: " surname2]
+        [:p "nbWin2: " nbWin2]
+        ]
+       [:div.game-gameboard
+        (game-case 0 0) ;[:div#11.game-gameboard__case [:p]]
+        (game-case 0 1);[:div#12.game-gameboard__case [:p]]
+        (game-case 0 2);[:div#13.game-gameboard__case [:p]]
+        (game-case 1 0);[:div#21.game-gameboard__case [:p]]
+        (game-case 1 1);[:div#22.game-gameboard__case [:p]]
+        (game-case 1 2);[:div#23.game-gameboard__case [:p]]
+        (game-case 2 0);[:div#31.game-gameboard__case [:p]]
+        (game-case 2 1);[:div#32.game-gameboard__case [:p]]
+        (game-case 2 2);[:div#33.game-gameboard__case [:p]]
+        ]
+       ]
 
-        [:script {:type "text/javascript"} "
+      [:script {:type "text/javascript"} "
           var player = 1;
           function init() {
             /* Pour chaque case, on initialise une fonction qui sera déclancher au clique */
@@ -162,18 +185,22 @@
                 if(this.textContent){
                   return;
                 }
-                /* Sinon, en fonction tu joueur, j'ajoute un X ou un O */
+                /* Sinon, en fonction du joueur, j'ajoute un X ou un O */
                 this.textContent = (player==1)? \"X\" : \"O\";
                 console.log({player,x,y});
                 player = (player == 1) ? 2 : 1;
                 /* TODO : envoyer les info au backend (clojure) */
+                /*" +
+       ;(controller/play-morpion2 1 1)
+       + "*/
               })
             }
           };
           document.addEventListener(\"DOMContentLoaded\", function(event) {
               console.log(\"ready\");
               init();
+              document.querySelector(\"body > div > div.game-gameboard > form > input[type=\\\"hidden\\\"]:nth-child(4)\").value = location.href;
           });
         "]
-        ; (controller/play-morpion )
-        )))
+      ; (controller/play-morpion )
+      )))

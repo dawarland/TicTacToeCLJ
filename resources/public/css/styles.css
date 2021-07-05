@@ -50,15 +50,15 @@ a{
     justify-content: center;
     align-items: stretch;
 }
-.player .player-block:not(:last-child){
+.player .player-bloc:not(:last-child){
     border-right: solid CornflowerBlue ;
 }
-.player-block{
+.player-bloc{
     display: flex;
     flex-direction: column;
     padding: 5%;
 }
-.player-block__form-group {
+.player-bloc__form-group {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -94,7 +94,7 @@ a{
     justify-content: center;
     align-items: center;
 }
-.game-block{
+.game-bloc{
     border: 2px solid blue;
     margin:1rem;
 }
