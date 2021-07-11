@@ -21,6 +21,11 @@
    " | "
    [:a {:href "/all-locations"} "View All Locations"]
    " ]"])
+(def home-button
+  [:header
+   [:a {:href "/"}
+    [:img.home-button {:src "https://www.nicepng.com/png/detail/89-898495_house-logo-png-home-address-logo-png.png" :alt "Return to home"}]]
+   ])
 
 (defn bloc-player [num]
   (let [all-players (db/get-all-players)]
@@ -32,7 +37,10 @@
             val2 = document.querySelector(\"select[name=\\\"p2_id\\\"]\")?.value || 0; /* 0 correspond a l'ID de l'ordinateur */
           "}
       (for [p all-players]
-        [:option {:value (:id p)} (:surname p)])
+        (cond (= (:id p) 0) ""
+              :else [:option {:value (:id p)} (:surname p)])
+
+        )
       ]
      [:form {:action "/add-player" :method "POST"}
       (util/anti-forgery-field)                             ; prevents cross-site scripting attacks
@@ -48,6 +56,7 @@
   []
   (page/html5
     (gen-page-head "Home")
+    home-button
     [:div.home
      [:h1 "Tic Tac Toe"]
      [:p "Choose your mode : "
@@ -60,6 +69,7 @@
   []
   (page/html5
     (gen-page-head "1 VS 1")
+    home-button
     [:h1 "Choose your players :"]
     [:div.player
      (bloc-player 1)
@@ -78,6 +88,7 @@
   []
   (page/html5
     (gen-page-head "1 VS AI")
+    home-button
     [:h1 "Choose your player :"]
     [:div.player
      (bloc-player 1)
@@ -93,6 +104,7 @@
   (let [all-player (db/get-all-players)]
     (page/html5
       (gen-page-head "Ranking")
+      home-button
       [:h1 "All Players stats"]
 
       [:h2 "Ranking"]
@@ -104,25 +116,23 @@
          )]
 
       [:h2 "History"]
-      (history)
+      (let [all-game (db/get-all-games)]
+        [:table.rank
+         [:tr [:th "id"] [:th "Date"] [:th "p1"] [:th "p2"] [:th "winner"]]
+         (for [game all-game]
+           [:tr [:td (:id game)] [:td (:date game)] [:td (:surname game)] [:td (:surname_2 game)] (cond (= (:winner game) 1) [:td (:surname game)]
+                                                                                                        (= (:winner game) 2) [:td (:surname_2 game)]
+                                                                                                        :else [:td "draw"]) ])])
       ))
 
   )
 
-(defn history
-  []
-  (let [all-game (db/get-all-games)]
-      [:table.rank
-       [:tr [:th "id"] [:th "Date"] [:th "p1"] [:th "p2"] [:th "winner"]]
-       (for [game all-game]
-         [:tr [:td (:id game)] [:td (:date game)] [:td (:surname game)] [:td (:surname_2 game)] (cond (= (:winner game) 1) [:td (:surname game)]
-                                                                                                      (= (:winner game) 2) [:td (:surname_2 game)]
-                                                                                                      :else [:td "draw"]) ])]))
 
 (defn add-player-page
   []
   (page/html5
     (gen-page-head "Add a player")
+    home-button
     [:h1 "Add a Player"]
     [:form {:action "/add-player" :method "POST"}
      (util/anti-forgery-field)
@@ -136,6 +146,7 @@
   (let [id (db/add-player-to-db surname)]
     (page/html5
       (gen-page-head "Added a player")
+      home-button
       [:h1 "Added a player"]
       [:p "Added [" surname "] (id: " id ") to the db."])))
 
@@ -201,6 +212,7 @@
   (let [{surname1 :surname nbWin1 :nbWin} (db/get-player p1) {surname2 :surname nbWin2 :nbWin} (db/get-player p2)]
     (page/html5
       (gen-page-head "Game")
+      home-button
       (let [game-id (db/add-game-to-db p1 p2)]
         [:h1 (str "Game " game-id)]
       [:div.game
@@ -263,6 +275,7 @@
   (let [{surname1 :surname nbWin1 :nbwin} (db/get-player p1) {surname2 :surname nbWin2 :nbwin} (db/get-player p2)]
     (page/html5
       (gen-page-head (str "Game " id))
+      home-button
       [:h1 (str "Game " id)]
       [:div.game
        [:div.game-bloc
@@ -287,7 +300,7 @@
         ]
        ]
       [:input {:type "hidden" :id "plateau" :value plateau}]
-      [:p#result (cond (controller/winning-morpion? (vec plateau)) (str (cond (= 1 player) (do (db/player-win p2 id) (str surname2 " wins !") )
+      [:p#result (cond (controller/winning-morpion? (vec plateau)) (str (cond (= "1" player) (do (db/player-win p2 id) (str surname2 " wins !") )
                                                                        :else (do (db/player-win p1 id) (str surname1 " wins !") ) )  )
                        (controller/end-morpion? (vec plateau))  (str "draw")
                 :else "")]

@@ -39,10 +39,13 @@
 
 (defn player-win
   [p-id game-id]
-  (let [results  (jdbc/execute! db-spec ["update players set nbwin = (nbwin + 1) where id = ?" p-id])
-        ]
-    (assert (= (count results) 1)))
-  (let [results  (jdbc/execute! db-spec ["update games set winner = ? where id = ?" p-id game-id])
-        ]
-    (assert (= (count results) 1)))
+  (do
+    (let [results  (jdbc/execute! db-spec ["update players set nbwin = (nbwin + 1) where id = ?" p-id])
+            ]
+        (assert (= (count results) 1)))
+      (let [results  (jdbc/execute! db-spec ["update games set winner = ? where id = ?" p-id game-id])
+            ]
+        (assert (= (count results) 1)))
+      )
+
   )
