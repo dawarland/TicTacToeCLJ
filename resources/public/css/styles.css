@@ -119,3 +119,27 @@ a{
     justify-content: center;
     /*width: auto;*/
 }
+
+/* ranking */
+.rank {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+.rank td, .rank th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+.rank tr:nth-child(even){
+    background-color: #9ba5b8;
+}
+
+.rank tr:hover {background-color: #ddd;}
+
+.rank th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #3147a9;
+    color: white;
+}

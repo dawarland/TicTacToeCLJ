@@ -14,6 +14,9 @@
            (GET "/1-vs-AI"
                 []
              (views/one-vs-ai))
+           (GET "/ranking"
+                []
+             (views/ranking))
            (GET "/add-player"
                 []
              (views/add-player-page))
@@ -23,6 +26,9 @@
            (GET "/game"
                 {params :params}
              (views/game-page params))
+           (POST "/game"
+                {params :params}
+             (views/post-game-page params))
            (POST "/move"
                 {params :params}
              (views/move params))

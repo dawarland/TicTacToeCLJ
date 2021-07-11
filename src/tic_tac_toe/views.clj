@@ -53,6 +53,7 @@
      [:p "Choose your mode : "
       [:a.home-menu__btn {:href (str "/1-vs-AI")} "1 VS AI"]
       [:a.home-menu__btn {:href (str "/1-vs-1")} "1 VS 1"]
+      [:a.home-menu__btn {:href (str "/ranking")} "Ranking"]
       ]
      ]))
 (defn one-vs-one
@@ -67,7 +68,7 @@
 
     [:a.player-btn__play {:href "#" :onclick "
     if(val1!=val2)
-      window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
+      window.location = \"/game?p1=\"+val1+\"&p2=\"+val2+\"&player=1\";
     else
       alert(\"Merci de choisir des joueurs differents\");
     "} "PLAY"]
@@ -82,11 +83,41 @@
      (bloc-player 1)
      ]
     [:a.player-btn__play {:href "#" :onclick "
-    window.location = \"/game?p1=\"+val1+\"&p2=\"+val2;
+    window.location = \"/game?p1=\"+val1+\"&p2=\"+val2+\"&player=1\";
     "} "PLAY"]
     )
   )
 
+(defn ranking
+  []
+  (let [all-player (db/get-all-players)]
+    (page/html5
+      (gen-page-head "Ranking")
+      [:h1 "All Players stats"]
+
+      [:h2 "Ranking"]
+      [:table.rank
+       [:tr [:th "Surname"] [:th "Number of wins"]]
+       (for [player all-player]
+         (cond (= (:id player) 0) ""
+               :else [:tr [:td (:surname player)] [:td (:nbwin player)]])
+         )]
+
+      [:h2 "History"]
+      (history)
+      ))
+
+  )
+
+(defn history
+  []
+  (let [all-game (db/get-all-games)]
+      [:table.rank
+       [:tr [:th "id"] [:th "Date"] [:th "p1"] [:th "p2"] [:th "winner"]]
+       (for [game all-game]
+         [:tr [:td (:id game)] [:td (:date game)] [:td (:surname game)] [:td (:surname_2 game)] (cond (= (:winner game) 1) [:td (:surname game)]
+                                                                                                      (= (:winner game) 2) [:td (:surname_2 game)]
+                                                                                                      :else [:td "draw"]) ])]))
 
 (defn add-player-page
   []
@@ -94,7 +125,7 @@
     (gen-page-head "Add a player")
     [:h1 "Add a Player"]
     [:form {:action "/add-player" :method "POST"}
-     (util/anti-forgery-field)                              ; prevents cross-site scripting attacks
+     (util/anti-forgery-field)
      [:div.player-bloc__form-group
       [:input {:type "text" :name "surname" :placeholder "Surname"}]
       [:input {:type "submit" :value "+"}]]
@@ -121,62 +152,85 @@
 
 
 (defn game-case
-  [x y]
+  [id x y plateau player]
   [:form {:action "/move" :method "POST"}
    (util/anti-forgery-field)
    [:input {:type "hidden" :name "x" :value x}]
    [:input {:type "hidden" :name "y" :value y}]
-   [:input {:type "hidden" :name "returnURL"}]
-   [:button {:class "game-gameboard__case" :name "submit"} [:p]]
+   [:input {:type "hidden" :name "plateau" :value (str plateau) }]
+   [:input {:type "hidden" :name "player" :value player}]
+   [:input {:type "hidden" :name "id" :value id}]
+   [:input {:type "hidden" :name "p1"}]
+   [:input {:type "hidden" :name "p2"}]
+   [:button {:id (str x y) :class "game-gameboard__case" :name "submit"} [:p]]
    ]
   )
 (defn parse-int [s]
   (Integer. (re-find  #"\d+" s )))
+
 (defn move
-  [{:keys [x y returnURL]}]
+  [{:keys [id x y player plateau p1 p2]}]
   (page/html5
+    [:p "id: " id]
     [:p "x: " x]
     [:p "y: " y]
-    [:p "returnURL: " returnURL]
-    [:p "game: " (str (controller/play-morpion2  (parse-int x)  (parse-int y)) )  ]
-
+    [:p "player: " player]
+    [:form {:action "/game" :method "POST"}
+     (util/anti-forgery-field)
+     [:input {:type "hidden" :name "id" :value id}]
+     [:input {:type "hidden" :name "x" :value x}]
+     [:input {:type "hidden" :name "y" :value y}]
+     [:input {:type "hidden" :name "p1" :value p1}]
+     [:input {:type "hidden" :name "p2" :value p2}]
+     [:input {:type "hidden" :name "player" :value (cond (= player "1") 2
+                                                         (= player "2") 1
+                                                         :else "3")}]
+     [:p (map #(str % ) (vec plateau))  ]
+     [:input {:type "hidden" :name "plateau" :value (str/join (controller/play-morpion2 (vec plateau) player (parse-int x)  (parse-int y)) ) }  ]
+      [:button {:name "submit"} "submit"]
+     ]
+    [:script {:type "text/javascript"} "
+          document.addEventListener(\"DOMContentLoaded\", function(event) {
+              document.querySelector(\"body > form > button\").click() ;
+          });
+        "]
     ))
 
 (defn game-page
-  [{:keys [p1 p2]}]
+  [{:keys [p1 p2 player]}]
   (let [{surname1 :surname nbWin1 :nbWin} (db/get-player p1) {surname2 :surname nbWin2 :nbWin} (db/get-player p2)]
     (page/html5
-      (gen-page-head (str "Game " p1))
-      ; (let [game-id (db/add-game-to-db p1 p2)]
-      (let [game-id 1]
-        [:h1 (str "Game " game-id)])
+      (gen-page-head "Game")
+      (let [game-id (db/add-game-to-db p1 p2)]
+        [:h1 (str "Game " game-id)]
       [:div.game
        [:div.game-bloc
-        [:p "id1: " p1]
-        [:p "surname1: " surname1]
-        [:p "nbWin1: " nbWin1]
+        [:p "Id P1: " p1]
+        [:p "Surname P1: " surname1]
+        [:p "Nb win P1: " nbWin1]
 
-        [:p "id2: " p2]
-        [:p "surname2: " surname2]
-        [:p "nbWin2: " nbWin2]
+        [:p "Id P2: " p2]
+        [:p "Surname P2: " surname2]
+        [:p "Nb win P2: " nbWin2]
         ]
        [:div.game-gameboard
-        (game-case 0 0) ;[:div#11.game-gameboard__case [:p]]
-        (game-case 0 1);[:div#12.game-gameboard__case [:p]]
-        (game-case 0 2);[:div#13.game-gameboard__case [:p]]
-        (game-case 1 0);[:div#21.game-gameboard__case [:p]]
-        (game-case 1 1);[:div#22.game-gameboard__case [:p]]
-        (game-case 1 2);[:div#23.game-gameboard__case [:p]]
-        (game-case 2 0);[:div#31.game-gameboard__case [:p]]
-        (game-case 2 1);[:div#32.game-gameboard__case [:p]]
-        (game-case 2 2);[:div#33.game-gameboard__case [:p]]
+        (game-case game-id 0 0 "000000000" player) ;[:div#11.game-gameboard__case [:p]]
+        (game-case game-id 1 0 "000000000" player);[:div#12.game-gameboard__case [:p]]
+        (game-case game-id 2 0 "000000000" player);[:div#13.game-gameboard__case [:p]]
+        (game-case game-id 0 1 "000000000" player);[:div#21.game-gameboard__case [:p]]
+        (game-case game-id 1 1 "000000000" player);[:div#22.game-gameboard__case [:p]]
+        (game-case game-id 2 1 "000000000" player);[:div#23.game-gameboard__case [:p]]
+        (game-case game-id 0 2 "000000000" player);[:div#31.game-gameboard__case [:p]]
+        (game-case game-id 1 2 "000000000" player);[:div#32.game-gameboard__case [:p]]
+        (game-case game-id 2 2 "000000000" player);[:div#33.game-gameboard__case [:p]]
         ]
        ]
+        )
 
       [:script {:type "text/javascript"} "
           var player = 1;
           function init() {
-            /* Pour chaque case, on initialise une fonction qui sera déclancher au clique */
+            // Pour chaque case, on initialise une fonction qui sera déclancher au clique
             for( x of document.getElementsByClassName(\"game-gameboard__case\") ){
               x.addEventListener(\"click\", function(){
                 console.log(this.id)
@@ -189,18 +243,87 @@
                 this.textContent = (player==1)? \"X\" : \"O\";
                 console.log({player,x,y});
                 player = (player == 1) ? 2 : 1;
-                /* TODO : envoyer les info au backend (clojure) */
-                /*" +
-       ;(controller/play-morpion2 1 1)
-       + "*/
+
               })
             }
           };
           document.addEventListener(\"DOMContentLoaded\", function(event) {
               console.log(\"ready\");
+              /*init();*/
+              var p1Id = document.querySelector(\"body > div > div.game-bloc > p:nth-child(1)\").textContent.split(':')[1].trim()
+              var p2Id = document.querySelector(\"body > div > div.game-bloc > p:nth-child(4)\").textContent.split(':')[1].trim()
+              document.querySelectorAll(\"input[name=\\\"p1\\\"]\").forEach(x=>x.value = p1Id);
+              document.querySelectorAll(\"input[name=\\\"p2\\\"]\").forEach(x=>x.value = p2Id);
+              });
+        "]
+      )))
+
+(defn post-game-page
+  [{:keys [p1 p2 id plateau player]}]
+  (let [{surname1 :surname nbWin1 :nbwin} (db/get-player p1) {surname2 :surname nbWin2 :nbwin} (db/get-player p2)]
+    (page/html5
+      (gen-page-head (str "Game " id))
+      [:h1 (str "Game " id)]
+      [:div.game
+       [:div.game-bloc
+        [:p "Id P1: " p1]
+        [:p "Surname P1: " surname1]
+        [:p "Nb win P1: " nbWin1]
+
+        [:p "Id P2: " p2]
+        [:p "Surname P2: " surname2]
+        [:p "Nb win P2: " nbWin2]
+        ]
+       [:div.game-gameboard
+        (game-case id 0 0 plateau player);[:div#11.game-gameboard__case [:p]]
+        (game-case id 1 0 plateau player);[:div#12.game-gameboard__case [:p]]
+        (game-case id 2 0 plateau player);[:div#13.game-gameboard__case [:p]]
+        (game-case id 0 1 plateau player);[:div#21.game-gameboard__case [:p]]
+        (game-case id 1 1 plateau player);[:div#22.game-gameboard__case [:p]]
+        (game-case id 2 1 plateau player);[:div#23.game-gameboard__case [:p]]
+        (game-case id 0 2 plateau player);[:div#31.game-gameboard__case [:p]]
+        (game-case id 1 2 plateau player);[:div#32.game-gameboard__case [:p]]
+        (game-case id 2 2 plateau player);[:div#33.game-gameboard__case [:p]]
+        ]
+       ]
+      [:input {:type "hidden" :id "plateau" :value plateau}]
+      [:p#result (cond (controller/winning-morpion? (vec plateau)) (str (cond (= 1 player) (do (db/player-win p2 id) (str surname2 " wins !") )
+                                                                       :else (do (db/player-win p1 id) (str surname1 " wins !") ) )  )
+                       (controller/end-morpion? (vec plateau))  (str "draw")
+                :else "")]
+
+      [:script {:type "text/javascript"} "
+          var player = 1;
+          function init() {
+            var plateau = document.getElementById(\"plateau\").value.split('');
+            var cases = document.getElementsByClassName(\"game-gameboard__case\");
+            console.log(plateau);
+            /* Pour chaque case, on initialise une fonction qui sera déclancher au clique */
+            for( let i = 0; i < cases.length ; i++){
+              cases[i].textContent = (plateau[i] == \"1\") ? \"X\" : (plateau[i] == \"2\") ? \"O\" : '';
+              cases[i].onclick = () => {
+                if(cases[i].textContent) return false ;
+                if( !!document.querySelector(\"#result\").textContent ) {
+                  if( confirm(\"Game finished! go to home page ?\")) {
+                    window.location= \"/\";
+                  }
+                  return false;
+                }
+
+                return true;
+              }
+            }
+          };
+
+          document.addEventListener(\"DOMContentLoaded\", function(event) {
+              console.log(\"ready\");
               init();
-              document.querySelector(\"body > div > div.game-gameboard > form > input[type=\\\"hidden\\\"]:nth-child(4)\").value = location.href;
+              var p1Id = document.querySelector(\"body > div > div.game-bloc > p:nth-child(1)\").textContent.split(':')[1].trim()
+              var p2Id = document.querySelector(\"body > div > div.game-bloc > p:nth-child(4)\").textContent.split(':')[1].trim()
+
+              document.querySelectorAll(\"input[name=\\\"p1\\\"]\").forEach(x=>x.value = p1Id);
+              document.querySelectorAll(\"input[name=\\\"p2\\\"]\").forEach(x=>x.value = p2Id);
           });
         "]
-      ; (controller/play-morpion )
-      )))
+      ))
+  )

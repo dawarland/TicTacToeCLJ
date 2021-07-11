@@ -15,8 +15,8 @@
 ; Renvoie le symbole present dans
 ; la case (x,y) du plateau
 ; x et y sont donnes en coordonnees de 0 a 2
-(defn get-case-morpion [plateau i j]
-  (get plateau (+ i (* 3 j))))
+(defn get-case-morpion [plateau x y]
+  (get plateau (+ x (* 3 y))))
 
 
 ; test de la fonction :
@@ -33,9 +33,16 @@
       1 "X"
       2 "O"))
   (newline)
-  (dotimes [i 3]
-    (dotimes [j 3]
-      (print (pcase (get-case-morpion plateau i j))))
+  (dotimes [x 3]
+    (dotimes [y 3]
+      (print (pcase (get-case-morpion plateau x y))))
+    (newline)))
+
+(defn print-morpion2 [plateau]
+  (newline)
+  (dotimes [x 3]
+    (dotimes [y 3]
+      (print (println (get-case-morpion plateau x y))))
     (newline)))
 
 
@@ -77,17 +84,17 @@
 ; renvoie true si une position gagnante est reconnue
 ; alignement de 3 cases identiques et differentes de 0
 (defn winning-morpion? [plateau]
-  (defn test [a b c] (and (not= a 0) (= a b) (= a c)))
-  (or (test (get-case-morpion plateau 0 0)  (get-case-morpion plateau 0 1)  (get-case-morpion plateau 0 2))
-      (test (get-case-morpion plateau 1 0)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 1 2))
-      (test (get-case-morpion plateau 2 0)  (get-case-morpion plateau 2 1)  (get-case-morpion plateau 2 2))
+  (defn testw [a b c] (and (not= a \0) (= a b) (= a c)))
+  (or (testw (get-case-morpion plateau 0 0)  (get-case-morpion plateau 0 1)  (get-case-morpion plateau 0 2))
+      (testw (get-case-morpion plateau 1 0)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 1 2))
+      (testw (get-case-morpion plateau 2 0)  (get-case-morpion plateau 2 1)  (get-case-morpion plateau 2 2))
 
-      (test (get-case-morpion plateau 0 0)  (get-case-morpion plateau 1 0)  (get-case-morpion plateau 2 0))
-      (test (get-case-morpion plateau 0 1)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 2 1))
-      (test (get-case-morpion plateau 0 2)  (get-case-morpion plateau 1 2)  (get-case-morpion plateau 2 2))
+      (testw (get-case-morpion plateau 0 0)  (get-case-morpion plateau 1 0)  (get-case-morpion plateau 2 0))
+      (testw (get-case-morpion plateau 0 1)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 2 1))
+      (testw (get-case-morpion plateau 0 2)  (get-case-morpion plateau 1 2)  (get-case-morpion plateau 2 2))
 
-      (test (get-case-morpion plateau 0 0)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 2 2))
-      (test (get-case-morpion plateau 2 0)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 0 2))
+      (testw (get-case-morpion plateau 0 0)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 2 2))
+      (testw (get-case-morpion plateau 2 0)  (get-case-morpion plateau 1 1)  (get-case-morpion plateau 0 2))
       ))
 
 ; test de la fonction :
@@ -137,7 +144,7 @@
 ; renvoie #t si toutes les cases sont occupees
 ; #f sinon
 (defn end-morpion? [plateau]
-  (empty? (filter (fn [x] (zero? x)) plateau)))
+  (empty? (filter (fn [x] (not (= x \0))) plateau)))
 ; -------------------------------------------
 
 ; -------------------------------------------
@@ -155,5 +162,5 @@
 (defn play-morpion2
   ([x y] (play-morpion2 (make-morpion) 1 x y ))
   ([plateau player x y]
-   (print-morpion plateau)
+   (print-morpion2 plateau)
    (move-morpion2 plateau player x y)))
